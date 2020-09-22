@@ -36,15 +36,16 @@
   	{% if output %}
 	  	{% for list_item in output %}
 		  	<tr>
-		      <th scope="row">{{ list_item.companyName }}</th>
+		      <th scope="row"><a href="{% url 'stock_info' list_item.symbol %}">{{ list_item.companyName }}</a></th>
 		      <td>${{ list_item.latestPrice }}</td>
 		      <td>${{ list_item.previousClose }}</td>
 		      <td>${{ list_item.marketCap }}</td>
 		      <td>{{ list_item.ytdChange }}%</td>
 		      <td>${{ list_item.week52High }}</td>
 		      <td>${{ list_item.week52Low }}</td>
-		      <td><a href="{% url 'delete' list_item.id %}">Delete</a></td> 
-          <td>{{ list_item.shares}}</td> 
+		      <td><a href="{% url 'delete' list_item.id %}">Delete</a></td>     
+          
+          <td><input class="form-control mr-sm-2" type="search" placeholder="Number of shares" aria-label="Shares" value={{list_item.shares}} name="shares"></td>
           <td>{{ list_item.value}}</td> 
 
 		    </tr>

@@ -66,5 +66,36 @@ def delete(request, stock_id):
 	return redirect(add_stock)
 
 
+def stock_info(request, ticker):
+	import requests
+	import json
+
+
+	api_request=requests.get("https://cloud.iexapis.com/stable/stock/" + ticker + "/quote?token=pk_fc2a82506a304894aa291aa4772106a8")
+
+	api=json.loads(api_request.content)
+	history=json.loads(history_request.content)
+
+	history_request=requests.get("https://cloud.iexapis.com/stable/stock/" + ticker + "/chart/max?token=pk_fc2a82506a304894aa291aa4772106a8")
+
+	list_date=[]
+	list_close=[]
+
+
+	stock_history={'date':[],'close': []}
+
+	for item in history:
+	  list_date.append(item['date'])
+	  list_close.append(item['close'])
+	  stock_history['date'].append(list_date)
+	  stock_history['close'].append(list_close)
+
+
+	return render(request, 'stock_info.html', {'api':api, 'history':stock_history})
+
+
 def delete_stock(request):
 	return render(request, 'delete_stock.html', {})
+
+def chart(request):
+	return render(request, 'chart.html', {})
