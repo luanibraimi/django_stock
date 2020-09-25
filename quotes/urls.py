@@ -10,6 +10,7 @@ urlpatterns = [
     path('delete_stock.htm>', views.delete_stock, name="delete_stock"),
     path('stock_info/<ticker>', views.stock_info, name="stock_info"),
     path('chart.html', views.chart, name="chart"),
+    path('stock_history.html', views.stock_history, name="stock_history"),
 
 
 

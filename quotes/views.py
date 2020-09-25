@@ -1,6 +1,6 @@
 #Copyrights LuanIbraimi all rights reserved
 from django.shortcuts import render, redirect
-from .models import Stock
+from .models import Stock, Stock_History2
 from .forms import StockForm
 from django.contrib import messages
 # Create your views here.
@@ -54,8 +54,19 @@ def add_stock(request):
 				api["shares"]=ticker_item.shares
 				api["value"]=api["shares"]*api["latestPrice"]
 				output.append(api)
-			except Exception as e:
-				api="Error..."
+			except:
+				api2={}
+				api2["shares"]=ticker_item.shares
+				api2["companyName"]=ticker_item.ticker
+				api2["symbol"]=ticker_item.ticker
+				api2["id"]=ticker_item.id
+				api2["latestPrice"]=0
+				api2["previousClose"]=0
+				api2["marketCap"]=0
+				api2["ytdChange"]=0
+				api2["week52High"]=0
+				api2["week52Low"]=0
+				output.append(api2)
 		return render(request, 'add_stock.html', {'ticker':ticker, 'output':output})
 
 
@@ -67,31 +78,23 @@ def delete(request, stock_id):
 
 
 def stock_info(request, ticker):
-	import requests
-	import json
 
-
-	api_request=requests.get("https://cloud.iexapis.com/stable/stock/" + ticker + "/quote?token=pk_fc2a82506a304894aa291aa4772106a8")
-
-	api=json.loads(api_request.content)
-	history=json.loads(history_request.content)
-
-	history_request=requests.get("https://cloud.iexapis.com/stable/stock/" + ticker + "/chart/max?token=pk_fc2a82506a304894aa291aa4772106a8")
+	api=Stock_History2.objects.filter(Ticker=ticker).order_by('-Date')
 
 	list_date=[]
 	list_close=[]
 
 
-	stock_history={'date':[],'close': []}
+	new_dictionary={'date':[],'close': []}
 
-	for item in history:
-	  list_date.append(item['date'])
-	  list_close.append(item['close'])
-	  stock_history['date'].append(list_date)
-	  stock_history['close'].append(list_close)
+	for item in api:
+	  list_date.append(item.Date)
+	  list_close.append(item.Close)
+	new_dictionary['date'].append(list_date)
+	new_dictionary['close'].append(list_close)
 
-
-	return render(request, 'stock_info.html', {'api':api, 'history':stock_history})
+	  
+	return render(request, 'stock_info.html', {'api':api, 'ticker':ticker, 'new_dictionary':new_dictionary})
 
 
 def delete_stock(request):
@@ -99,3 +102,48 @@ def delete_stock(request):
 
 def chart(request):
 	return render(request, 'chart.html', {})
+	
+
+
+def stock_history(request):
+		import yfinance as yf
+		import pandas as pd
+		import numpy as np
+		from django.shortcuts import HttpResponse
+		from django.conf import settings 
+		from sqlalchemy import create_engine
+
+		data = pd.read_csv('C:/Users/Luan Ibraimi/Desktop/Tickers.txt', sep='\t',error_bad_lines=False, encoding = "ISO-8859-1")
+		
+		stock_info=data['Symbol'].apply(yf.Ticker)
+
+		df=pd.DataFrame([])
+		counter=0
+		for i,val in stock_info.items():
+			counter=counter+1
+			values=val.history(period='1y')
+			values['Ticker']=val.ticker
+			values['Counter']=counter  
+			df=pd.concat([df, values], axis=0)
+		
+		#df['Date']=df.index
+		
+		df['id']=range(len(df))
+
+		df=df[['id','Counter','Open','High','Low','Close','Volume','Ticker']]
+
+
+
+		engine=create_engine('sqlite:///db.sqlite3')
+		#ls=engine.table_names() , {'ls':ls}
+
+		df.to_sql('quotes_stock_history2', con=engine, if_exists="replace")
+
+
+		return render(request, 'stock_history.html')	
+		#return render(request, 'chart.html', {'df':df })
+
+
+
+
+
